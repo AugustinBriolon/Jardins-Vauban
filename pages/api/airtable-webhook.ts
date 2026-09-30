@@ -27,7 +27,10 @@ async function readRawBody(req: NextApiRequest): Promise<string> {
 /** Lot pages changed in the last minutes, read from the webhook payloads. */
 async function changedLotPages(): Promise<string[]> {
   const referenceFieldId = process.env.AIRTABLE_REFERENCE_FIELD_ID;
-  if (!referenceFieldId) return [];
+  if (!referenceFieldId) {
+    console.warn("[airtable-webhook] AIRTABLE_REFERENCE_FIELD_ID is not set: lot pages are not rebuilt.");
+    return [];
+  }
   const since = new Date(Date.now() - RECENT_CHANGES_WINDOW_MS);
   return changedLotReferences(await fetchWebhookPayloads(), referenceFieldId, since).map(lotPath);
 }
@@ -73,5 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error("[airtable-webhook] Lot page revalidation failed:", error);
   }
 
-  return res.status(200).json({ revalidated: [...LOT_PAGES, ...lotPages] });
+  const revalidated = [...LOT_PAGES, ...lotPages];
+  console.info(`[airtable-webhook] Revalidated ${revalidated.join(", ")}`);
+  return res.status(200).json({ revalidated });
 }
