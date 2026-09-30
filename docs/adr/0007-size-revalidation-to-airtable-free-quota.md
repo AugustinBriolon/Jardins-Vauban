@@ -6,6 +6,8 @@ Date: 2026-09-30
 
 Proposed
 
+Amended by [ADR-0008](0008-rebuild-changed-lot-pages-from-webhook-payloads.md) (lot pages rebuilt by the webhook)
+
 Amends [ADR-0005](0005-revalidate-pages-on-airtable-webhook.md)
 
 ## Context
