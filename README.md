@@ -24,8 +24,8 @@ npm install
 cp .env.local.example .env.local
 # → Remplir AIRTABLE_API_KEY et AIRTABLE_BASE_ID dans .env.local
 
-# 3. Créer la structure Airtable et seed les 48 lots
-npx ts-node --skip-project scripts/seed.ts
+# 3. Créer automatiquement la structure Airtable et insérer les 48 lots
+npx ts-node --skip-project scripts/setup.ts
 
 # 4. Lancer en dev
 npm run dev

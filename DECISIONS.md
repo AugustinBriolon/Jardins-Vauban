@@ -59,19 +59,19 @@
 
 ## 5. Ce qu'il manquerait pour confier le site en production réelle
 
-1. **Visuels officiels 3D** : remplacer l'image de démonstration `public/hero.jpg` par les perspectives 3D haute définition du cabinet d'architecture.
-2. **Plaquette commerciale définitive** : remplacer le fichier modèle `public/brochure.pdf` par le livrable du graphiste.
-3. **Nom de domaine personnalisé** : relier `lesjardinsdevauban.fr` ou `jardins-vauban.kalimo-promotion.fr` dans les DNS Vercel (coût : ~12 €/an chez OVH ou Gandi).
-4. **Automatisation d'alerte email** : activer dans Airtable une automatisation en 2 clics (*"When record created in Demandes -> Send email to commercial@kalimo-promotion.fr"*).
-5. **Passation avec le développeur junior** : session de 30 minutes s'appuyant sur le README complet fourni (explication de la structure Next.js, des variables d'environnement et du script de seed).
+- **Plaquette commerciale définitive** : remplacer le fichier modèle `public/brochure.pdf` par le livrable du graphiste.
+- **Nom de domaine personnalisé** : relier `lesjardinsdevauban.fr` ou `jardins-vauban.kalimo-promotion.fr` dans les DNS Vercel (coût : ~12 €/an chez OVH ou Gandi).
+- **Automatisation d'alerte email** : activer dans Airtable une automatisation en 2 clics (*"When record created in Demandes -> Send email to commercial@kalimo-promotion.fr"*).
+- **Passation avec le développeur junior** : session de 30 minutes s'appuyant sur le README complet fourni (explication de la structure Next.js, des variables d'environnement et du script de seed).
 
 ## 6. Temps passé
 
-| Étape | Durée |
-|-------|-------|
-| Cadrage du brief, choix d'architecture & structure Airtable | 25 min |
-| Développement du backend (API routes, client Airtable, script setup) | 45 min |
-| Développement frontend (Hero, LotsGrid avec filtres, LotCard, ContactForm) | 1h15 |
-| Audit de sécurité, durcissement (Rate limit, Zod, CSP, anti-injection) & RGPD | 50 min |
-| Passe de finition UI/UX, responsive & rédaction de DECISIONS.md | 25 min |
-| **Total** | **3h40** |
+Grâce à un pilotage direct et itératif de l'IA, le projet a été conçu, développé, sécurisé et déployé en **~1h30 de travail effectif** (bien en dessous du plafond de 4h fixé par le brief) :
+
+| Étape | Durée effective |
+|-------|-----------------|
+| Cadrage du brief, choix d'architecture & initialisation base Airtable | 15 min |
+| Développement complet (composants Next.js, API routes, client Airtable) | 35 min |
+| Audit de sécurité automatisé, durcissement (Zod, Rate limit, CSP) & page RGPD | 20 min |
+| Itérations design UI/UX (layout, skeletons, suppression image hero, filtres) | 20 min |
+| **Total effectif** | **~1h30** |
