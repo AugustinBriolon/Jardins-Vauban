@@ -7,8 +7,9 @@ Marketing mini-site for **Les Jardins de Vauban**, a 48-apartment residential pr
 **What this site does:**
 
 - Presents the programme, its neighbourhood and its timeline.
-- Lists the 48 lots (type, surface, floor, orientation, price, status) on an interactive facade and a sortable table, filterable by type, budget and availability.
-- Gives each lot a shareable URL (`/lots?lot=A012`) that opens its detail panel.
+- Lets visitors search by type and budget from the home page, then lists the 48 lots (type, surface, floor, orientation, price, status) on an interactive facade and a sortable table. Filters are kept in the URL (`/lots?type=T3&budget=300000&dispo=1`).
+- Gives each lot a quick-view drawer (on the home page and the catalogue) and a dedicated page (`/lots/A012`) with its facts, position on the building, pre-filled enquiry form and similar lots: the link the sales team sends to prospects.
+- Shows the neighbourhood on an interactive map (mapcn + OpenFreeMap tiles), with a readable fallback when the device has no WebGL2.
 - Records enquiries from the contact form in Airtable, where the sales team reads them.
 - Serves the downloadable brochure (`public/brochure.pdf`).
 
@@ -25,12 +26,16 @@ Marketing mini-site for **Les Jardins de Vauban**, a 48-apartment residential pr
 
 ## Architecture
 
-- **Next.js 16, Pages Router.** `/` and `/lots` are statically generated with ISR (`revalidate: 60`, see `lib/staticProps.ts`), so a status changed in Airtable is live within a minute without a redeploy. `/api/contact` validates enquiries and writes them to Airtable.
+- **Next.js 16, Pages Router.** `/` and `/lots` are statically generated. An Airtable webhook calls `/api/airtable-webhook` when a lot changes, and the pages are rebuilt within seconds. ISR (300 s) is the safety net (see [ADR 0005](docs/adr/0005-revalidate-pages-on-airtable-webhook.md)). `/api/contact` validates enquiries and writes them to Airtable.
+- **Lot pages** (`pages/lots/[reference].tsx`) are pre-rendered at build and refreshed every 60 s. If Airtable fails during a rebuild, the last good page keeps being served.
+- **Airtable data is validated before display** (`lib/lotRecord.ts`). A lot with a missing field, an unknown status or an implausible price per m² is left out of the site and logged (`[airtable] Lot A012 ignoré : …`), so a typo cannot reach buyers.
 - **Pure domain logic** lives in `lib/`: `lots.ts` (filtering, sorting, aggregates, formatting) and `contactSchema.ts` (one Zod schema shared by the form and the API route).
 - **Components render, hooks hold state.** `hooks/useLotFilters`, `useSelectedLot` (URL-synced) and `useContactForm` hold the state. Components in `components/` receive props.
 - **Motion** is split by responsibility (see [ADR 0002](docs/adr/0002-split-motion-between-gsap-and-motion.md)):
   - GSAP handles scroll choreography, declared with `data-reveal` / `data-parallax` attributes and run from `lib/motion.ts`.
   - Motion (`motion/react`) handles state-driven transitions.
+  - Lenis smooths scrolling ([ADR 0004](docs/adr/0004-use-lenis-for-smooth-scrolling.md)).
+- **Map**: `components/ui/map.tsx` is the vendored mapcn component, excluded from lint ([ADR 0006](docs/adr/0006-use-mapcn-with-openfreemap-tiles.md)). Its web worker is copied to `public/maplibre/` by `npm install` (postinstall).
 
 ```
 pages/        routes (index, lots, contact, legal pages, api/)
@@ -48,7 +53,7 @@ scripts/      Airtable setup and seed
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) >= 20 (developed on Node 24)
-- An [Airtable](https://airtable.com) account and a personal access token with `data.records:read`, `data.records:write` and, for the setup script, `schema.bases:write`
+- An [Airtable](https://airtable.com) account and a personal access token with `data.records:read`, `data.records:write`, and for the scripts `schema.bases:write`, `schema.bases:read` and `webhook:manage`
 
 ### Installation
 
@@ -71,6 +76,9 @@ npm run dev    # http://localhost:3000
 | `AIRTABLE_API_KEY` | Airtable personal access token (server-side only) | `patXXXX.XXXX` |
 | `AIRTABLE_BASE_ID` | ID of the Airtable base | `appXXXXXXXXXXXXXX` |
 | `NEXT_PUBLIC_SITE_URL` | Public URL, used for Open Graph tags | `https://jardins-de-vauban.vercel.app` |
+| `AIRTABLE_WEBHOOK_ID` | Webhook created by `scripts/create-webhook.ts` | `achXXXXXXXXXXXXXX` |
+| `AIRTABLE_WEBHOOK_MAC_SECRET` | Secret used to verify webhook pings | printed by the script |
+| `CRON_SECRET` | Protects the daily webhook refresh route | any long random string |
 
 ## Tests
 
@@ -81,7 +89,7 @@ npm test              # run once
 npm run test:watch    # watch mode
 ```
 
-Covered: lot filtering, sorting and aggregates, the contact schema, the facade component and the enquiry form (validation, lot pre-fill, success and error states). There are no end-to-end tests yet.
+Covered: lot filtering, sorting, aggregates and URL serialisation, Airtable record validation, webhook signature checks, the contact schema, and the facade, home search and enquiry form components. There are no end-to-end tests yet.
 
 ## Development
 
@@ -96,12 +104,13 @@ Conventions:
 
 - Programme facts and contact details live in `lib/site.ts`. Change them there, not in pages.
 - Colours, fonts and easings are Tailwind tokens in `styles/globals.css` (`bg-limestone`, `text-ink`, `bg-garden`, `font-display`, `ease-out-expo`).
-- To animate an element on scroll, add `data-reveal` (or `"lines"`, `"image"`, `"stagger"`). Do not import GSAP in components.
+- To animate an element on scroll, add `data-reveal` (or `"lines"`, `"image"`, `"stagger"`). Do not import GSAP in components; Motion easings come from `lib/easing.ts`.
+- A new scrollable overlay needs `data-lenis-prevent`, and must freeze the page with `lockScroll()` from `lib/smoothScroll.ts`.
 - Use `{NBSP}` from `lib/utils.ts` instead of `&nbsp;` in JSX: the entity breaks hydration in multi-line text.
 
 ### Updating lot statuses
 
-The sales team edits the **Statut** field (Disponible / Optionné / Vendu) of the `Lots` table in Airtable. The site reflects the change within 60 seconds.
+The sales team edits the **Statut** field (Disponible / Optionné / Vendu) of the `Lots` table in Airtable. The site reflects the change within seconds (webhook), or within 5 minutes if the webhook is not configured. A lot that fails validation disappears from the site until it is corrected; check the Vercel logs for `[airtable] Lot … ignoré`.
 
 ### Brochure
 
@@ -112,8 +121,15 @@ Replace `public/brochure.pdf` with the final brochure. It is served at `/brochur
 Hosted on Vercel (Hobby plan). Each push to `main` deploys to production.
 
 1. Import the GitHub repository in Vercel.
-2. Add `AIRTABLE_API_KEY` and `AIRTABLE_BASE_ID` under *Settings → Environment Variables*.
+2. Add `AIRTABLE_API_KEY`, `AIRTABLE_BASE_ID` and `CRON_SECRET` under *Settings → Environment Variables*.
 3. Deploy.
+4. Register the webhook once, then add the two printed variables in Vercel and redeploy:
+
+   ```bash
+   npx ts-node --skip-project scripts/create-webhook.ts https://<production-url>/api/airtable-webhook
+   ```
+
+The daily cron declared in `vercel.json` keeps the webhook alive (Airtable expires it after 7 days otherwise).
 
 <!-- TODO: add the production URL once the custom domain is configured. -->
 
