@@ -11,7 +11,7 @@ export interface LotPageProps {
   lots: Lot[];
 }
 
-/** Listing pages rebuilt on demand when a lot changes (see api/airtable-webhook). */
+/** Listing pages rebuilt on every lot change (see api/airtable-webhook); lot pages are rebuilt individually. */
 export const LOT_PAGES = ["/", "/lots"] as const;
 
 /*
@@ -22,11 +22,9 @@ export const LOT_PAGES = ["/", "/lots"] as const;
  */
 const LISTING_REVALIDATE_SECONDS = 24 * 60 * 60;
 
-// Lot pages are not rebuilt by the webhook (48 rebuilds would exceed Airtable's
-// 5 requests/s limit), so the daily window is their only refresh path. ISR serves
-// the cached page to the first visitor after expiry while it rebuilds: a lot page
-// can lag a status change by a little over a day. Known limit, see docs/adr/0007.
-const LOT_PAGE_REVALIDATE_SECONDS = 24 * 60 * 60;
+// Lot pages are rebuilt by the webhook only when their lot changes (see
+// api/airtable-webhook), so their time-based window can be a weekly safety net.
+const LOT_PAGE_REVALIDATE_SECONDS = 7 * 24 * 60 * 60;
 
 const isBuild = () => process.env.NEXT_PHASE === "phase-production-build";
 
