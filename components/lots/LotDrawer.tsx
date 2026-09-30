@@ -1,12 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { X } from "lucide-react";
 import type { Lot } from "@/types";
-import { formatFloor, formatPrice, pricePerSquareMeter } from "@/lib/lots";
+import { lotPath } from "@/lib/lots";
 import ActionLink, { actionClasses } from "@/components/ui/ActionLink";
 import Facade from "@/components/lots/Facade";
 import { NBSP } from "@/lib/utils";
 import { StatusLabel } from "@/components/lots/status";
+import LotFacts from "@/components/lots/LotFacts";
+import CopyLinkButton from "@/components/lots/CopyLinkButton";
+import { lockScroll } from "@/lib/smoothScroll";
+import { EASE_OUT, EASE_IN_OUT } from "@/lib/easing";
 
 interface LotDrawerProps {
   lot: Lot | null;
@@ -14,8 +18,6 @@ interface LotDrawerProps {
   onClose: () => void;
   onShowSimilar: (lot: Lot) => void;
 }
-
-const PANEL_EASE = [0.76, 0, 0.24, 1] as const;
 
 /** Closes on Escape, locks page scroll and moves focus into the panel while open. */
 function useDialogBehaviour(open: boolean, onClose: () => void) {
@@ -27,12 +29,12 @@ function useDialogBehaviour(open: boolean, onClose: () => void) {
     const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && onClose();
 
     document.addEventListener("keydown", onKeyDown);
-    document.body.style.overflow = "hidden";
+    lockScroll(true);
     panelRef.current?.focus();
 
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = "";
+      lockScroll(false);
       previouslyFocused?.focus();
     };
   }, [open, onClose]);
@@ -62,10 +64,11 @@ export default function LotDrawer({ lot, allLots, onClose, onShowSimilar }: LotD
             aria-modal="true"
             aria-labelledby="lot-drawer-title"
             tabIndex={-1}
+            data-lenis-prevent
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ duration: 0.7, ease: PANEL_EASE }}
+            transition={{ duration: 0.9, ease: EASE_IN_OUT }}
             className="absolute inset-y-0 right-0 flex w-full max-w-xl flex-col overflow-y-auto bg-limestone outline-none"
           >
             <LotDetail lot={lot} allLots={allLots} onClose={onClose} onShowSimilar={onShowSimilar} />
@@ -77,15 +80,6 @@ export default function LotDrawer({ lot, allLots, onClose, onShowSimilar }: LotD
 }
 
 function LotDetail({ lot, allLots, onClose, onShowSimilar }: LotDrawerProps & { lot: Lot }) {
-  const facts = [
-    { term: "Surface habitable", value: `${lot.surface} m²` },
-    { term: "Extérieur", value: lot.terrasse ? `Terrasse de ${lot.terrasse} m²` : "—" },
-    { term: "Niveau", value: formatFloor(lot.etage) },
-    { term: "Exposition", value: lot.exposition },
-    { term: "Prix", value: lot.statut === "Vendu" ? "—" : formatPrice(lot.prix) },
-    { term: "Prix au m²", value: lot.statut === "Vendu" ? "—" : formatPrice(pricePerSquareMeter(lot)) },
-  ];
-
   return (
     <>
       <div className="flex items-center justify-between border-b border-line px-6 py-5 sm:px-10">
@@ -116,14 +110,7 @@ function LotDetail({ lot, allLots, onClose, onShowSimilar }: LotDrawerProps & { 
         </Stagger>
 
         <Stagger>
-          <dl>
-            {facts.map((fact) => (
-              <div key={fact.term} className="tabular flex justify-between gap-6 border-b border-line py-3 first:border-t">
-                <dt className="text-ink-soft">{fact.term}</dt>
-                <dd>{fact.value}</dd>
-              </div>
-            ))}
-          </dl>
+          <LotFacts lot={lot} />
         </Stagger>
 
         <Stagger>
@@ -135,6 +122,9 @@ function LotDetail({ lot, allLots, onClose, onShowSimilar }: LotDrawerProps & { 
 
         <Stagger className="mt-auto flex flex-col gap-3">
           <PrimaryAction lot={lot} onShowSimilar={onShowSimilar} />
+          <ActionLink href={lotPath(lot.reference)} variant="outline" className="w-full">
+            Voir la fiche complète
+          </ActionLink>
           <CopyLinkButton reference={lot.reference} />
         </Stagger>
       </motion.div>
@@ -146,7 +136,7 @@ function Stagger({ children, className }: { children: React.ReactNode; className
   return (
     <motion.div
       variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.6, ease: EASE_OUT }}
       className={className}
     >
       {children}
@@ -165,38 +155,8 @@ function PrimaryAction({ lot, onShowSimilar }: { lot: Lot; onShowSimilar: (lot: 
 
   const label = lot.statut === "Optionné" ? "Être prévenu si l'option est levée" : "Recevoir le plan de ce lot";
   return (
-    <ActionLink href={`/contact?lot=${encodeURIComponent(lot.reference)}`} className="w-full">
+    <ActionLink href={`${lotPath(lot.reference)}#demande`} className="w-full">
       {label}
     </ActionLink>
-  );
-}
-
-/** Lets the sales team (or a buyer) share a direct link to this lot. */
-function CopyLinkButton({ reference }: { reference: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const copy = async () => {
-    const url = `${window.location.origin}/lots?lot=${encodeURIComponent(reference)}`;
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <button type="button" onClick={copy} className="relative h-10 overflow-hidden text-sm text-ink-soft transition-colors hover:text-ink">
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={copied ? "copied" : "copy"}
-          initial={{ y: "100%" }}
-          animate={{ y: "0%" }}
-          exit={{ y: "-100%" }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="block"
-          aria-live="polite"
-        >
-          {copied ? "Lien copié" : "Copier le lien de ce lot"}
-        </motion.span>
-      </AnimatePresence>
-    </button>
   );
 }

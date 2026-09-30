@@ -5,12 +5,11 @@ import type { ContactField } from "@/lib/contactSchema";
 import { useContactForm } from "@/hooks/useContactForm";
 import { actionClasses, ActionArrow } from "@/components/ui/ActionLink";
 import { SITE } from "@/lib/site";
-import { cn } from "@/lib/utils";
+import { cn, NBSP } from "@/lib/utils";
+import { EASE_OUT } from "@/lib/easing";
 
-const EASE = [0.16, 1, 0.3, 1] as const;
-
-export default function ContactForm() {
-  const form = useContactForm();
+export default function ContactForm({ lotReference }: { lotReference?: string }) {
+  const form = useContactForm(lotReference);
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -24,7 +23,7 @@ export default function ContactForm() {
           action="/api/contact"
           noValidate
           exit={{ opacity: 0, y: -16 }}
-          transition={{ duration: 0.4, ease: EASE }}
+          transition={{ duration: 0.4, ease: EASE_OUT }}
           onSubmit={(event) => {
             event.preventDefault();
             form.submit();
@@ -153,7 +152,7 @@ function FieldError({ id, message }: { id?: string; message?: string }) {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.3, ease: EASE }}
+          transition={{ duration: 0.3, ease: EASE_OUT }}
           className="pt-2 text-sm text-ochre"
         >
           {message}
@@ -199,22 +198,22 @@ function SuccessMessage({ firstName, onRestart }: { firstName: string; onRestart
       role="status"
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, ease: EASE }}
+      transition={{ duration: 0.7, ease: EASE_OUT }}
       className="py-10"
     >
       <svg viewBox="0 0 64 64" aria-hidden className="size-16 text-garden">
         <motion.circle
           cx="32" cy="32" r="30" fill="none" stroke="currentColor" strokeWidth="1.5"
-          initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.8, ease: EASE }}
+          initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.8, ease: EASE_OUT }}
         />
         <motion.path
           d="M20 33 L28 41 L45 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.5, duration: 0.5, ease: EASE }}
+          initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.5, duration: 0.5, ease: EASE_OUT }}
         />
       </svg>
       <h2 className="font-display mt-8 text-5xl leading-none">Merci{firstName ? `, ${firstName}` : ""}.</h2>
       <p className="mt-4 max-w-md text-lg text-ink-soft">
-        Votre demande est bien arrivée. Un conseiller vous recontacte sous 48 h ouvrées avec les plans et les prix.
+        Votre demande est bien arrivée. Un conseiller vous recontacte sous 48{NBSP}h ouvrées avec les plans et les prix.
       </p>
       <div className="mt-10 flex flex-wrap items-center gap-6">
         <a href={SITE.brochureUrl} target="_blank" rel="noopener" className={actionClasses("outline")}>

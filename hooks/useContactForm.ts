@@ -17,10 +17,13 @@ const EMPTY_FORM: ContactInput = {
 
 const LOT_REFERENCE = /^[a-zA-Z0-9_-]{1,20}$/;
 
-/** Form state, inline validation (shared Zod schema) and submission to /api/contact. */
-export function useContactForm() {
+/**
+ * Form state, inline validation (shared Zod schema) and submission to /api/contact.
+ * The lot is pre-filled from `lotReference` (lot page) or from `?lot=` (contact page).
+ */
+export function useContactForm(lotReference?: string) {
   const router = useRouter();
-  const [values, setValues] = useState<ContactInput>(EMPTY_FORM);
+  const [values, setValues] = useState<ContactInput>({ ...EMPTY_FORM, lotSouhaite: lotReference ?? "" });
   const [touched, setTouched] = useState<Partial<Record<ContactField, boolean>>>({});
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [serverError, setServerError] = useState<string | null>(null);
@@ -69,7 +72,7 @@ export function useContactForm() {
   };
 
   const restart = () => {
-    setValues(EMPTY_FORM);
+    setValues({ ...EMPTY_FORM, lotSouhaite: lotReference ?? "" });
     setTouched({});
     setStatus("idle");
   };

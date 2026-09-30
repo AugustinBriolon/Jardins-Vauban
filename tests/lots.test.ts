@@ -6,8 +6,10 @@ import {
   formatFloor,
   groupByFloor,
   hasActiveFilters,
+  lotPath,
   priceBounds,
   pricePerSquareMeter,
+  similarLots,
   sortLots,
   startingPriceByType,
 } from "@/lib/lots";
@@ -92,5 +94,23 @@ describe("formatting", () => {
 
   it("computes a rounded price per square metre", () => {
     expect(pricePerSquareMeter(makeLot({ prix: 250_000, surface: 48 }))).toBe(5208);
+  });
+});
+
+describe("lot pages", () => {
+  it("builds the shareable path of a lot", () => {
+    expect(lotPath("A012")).toBe("/lots/A012");
+  });
+
+  it("suggests available lots of the same type, closest in price first", () => {
+    const target = makeLot({ id: "t", type: "T3", prix: 300_000 });
+    const pool = [
+      target,
+      makeLot({ id: "far", type: "T3", prix: 400_000 }),
+      makeLot({ id: "close", type: "T3", prix: 310_000 }),
+      makeLot({ id: "sold", type: "T3", prix: 301_000, statut: "Vendu" }),
+      makeLot({ id: "other-type", type: "T2", prix: 300_000 }),
+    ];
+    expect(similarLots(target, pool).map((lot) => lot.id)).toEqual(["close", "far"]);
   });
 });

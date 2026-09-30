@@ -1,6 +1,7 @@
 import Head from "next/head";
 import ContactForm from "@/components/contact/ContactForm";
 import { SITE } from "@/lib/site";
+import { NBSP } from "@/lib/utils";
 
 export default function ContactPage() {
   return (
@@ -9,7 +10,7 @@ export default function ContactPage() {
         <title>{`Demande d'information — ${SITE.programme}`}</title>
         <meta
           name="description"
-          content={`Recevez les plans, les prix et les disponibilités des ${SITE.programme} à Bordeaux. Un conseiller ${SITE.developer} vous rappelle sous 48 h ouvrées.`}
+          content={`Recevez les plans, les prix et les disponibilités des ${SITE.programme} à Bordeaux. Un conseiller ${SITE.developer} vous rappelle sous 48\u00a0h ouvrées.`}
         />
       </Head>
 
@@ -23,7 +24,7 @@ export default function ContactPage() {
             Parlons de votre projet.
           </h1>
           <p data-reveal className="mt-8 max-w-md text-lg leading-relaxed text-ink-soft">
-            Plans détaillés, grille de prix, simulation de financement : un conseiller dédié au programme vous rappelle sous 48 h ouvrées.
+            Plans détaillés, grille de prix, simulation de financement : un conseiller dédié au programme vous rappelle sous 48{NBSP}h ouvrées.
           </p>
 
           <dl data-reveal className="mt-14 space-y-6 border-t border-line pt-8 text-sm">
