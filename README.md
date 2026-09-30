@@ -26,8 +26,8 @@ Marketing mini-site for **Les Jardins de Vauban**, a 48-apartment residential pr
 
 ## Architecture
 
-- **Next.js 16, Pages Router.** `/` and `/lots` are statically generated. An Airtable webhook calls `/api/airtable-webhook` when a lot changes, and the pages are rebuilt within seconds. ISR (300 s) is the safety net (see [ADR 0005](docs/adr/0005-revalidate-pages-on-airtable-webhook.md)). `/api/contact` validates enquiries and writes them to Airtable.
-- **Lot pages** (`pages/lots/[reference].tsx`) are pre-rendered at build and refreshed every 60 s. If Airtable fails during a rebuild, the last good page keeps being served.
+- **Next.js 16, Pages Router.** `/` and `/lots` are statically generated. An Airtable webhook calls `/api/airtable-webhook` when a lot changes, and the pages are rebuilt within seconds. A daily ISR window is the safety net, sized to the Airtable Free quota of 1,000 API calls per month (see [ADR 0005](docs/adr/0005-revalidate-pages-on-airtable-webhook.md)). `/api/contact` validates enquiries and writes them to Airtable.
+- **Lot pages** (`pages/lots/[reference].tsx`) are pre-rendered at build and refreshed at most once a day (not by the webhook, see [ADR 0007](docs/adr/0007-size-revalidation-to-airtable-free-quota.md)). If Airtable fails during a rebuild, the last good page keeps being served.
 - **Airtable data is validated before display** (`lib/lotRecord.ts`). A lot with a missing field, an unknown status or an implausible price per m² is left out of the site and logged (`[airtable] Lot A012 ignoré : …`), so a typo cannot reach buyers.
 - **Pure domain logic** lives in `lib/`: `lots.ts` (filtering, sorting, aggregates, formatting) and `contactSchema.ts` (one Zod schema shared by the form and the API route).
 - **Components render, hooks hold state.** `hooks/useLotFilters`, `useSelectedLot` (URL-synced) and `useContactForm` hold the state. Components in `components/` receive props.
@@ -110,7 +110,7 @@ Conventions:
 
 ### Updating lot statuses
 
-The sales team edits the **Statut** field (Disponible / Optionné / Vendu) of the `Lots` table in Airtable. The site reflects the change within seconds (webhook), or within 5 minutes if the webhook is not configured. A lot that fails validation disappears from the site until it is corrected; check the Vercel logs for `[airtable] Lot … ignoré`.
+The sales team edits the **Statut** field (Disponible / Optionné / Vendu) of the `Lots` table in Airtable. The site reflects the change within seconds (webhook), or within a day if the webhook is not configured. Lot pages can lag by up to a day. A lot that fails validation disappears from the site until it is corrected; check the Vercel logs for `[airtable] Lot … ignoré`.
 
 ### Brochure
 
