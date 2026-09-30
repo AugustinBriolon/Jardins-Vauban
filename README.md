@@ -1,40 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Les Jardins de Vauban — Site programme
 
-## Getting Started
+Mini-site de commercialisation du programme immobilier **Les Jardins de Vauban** (48 logements, Bordeaux). Réalisé par Kalimo Promotion.
 
-First, run the development server:
+## Stack technique
+
+| Élément | Choix |
+|---------|-------|
+| Framework | Next.js 16 (Pages Router, TypeScript) |
+| Styles | Tailwind CSS v4 |
+| Base de données | Airtable (plan gratuit) |
+| Hébergement | Vercel (plan gratuit) |
+| Analytics | Vercel Analytics (cookie-free) |
+
+## Lancement local
 
 ```bash
+# 1. Cloner et installer
+git clone <repo>
+cd jardins-de-vauban
+npm install
+
+# 2. Configurer l'environnement
+cp .env.local.example .env.local
+# → Remplir AIRTABLE_API_KEY et AIRTABLE_BASE_ID dans .env.local
+
+# 3. Créer la structure Airtable et seed les 48 lots
+npx ts-node --skip-project scripts/seed.ts
+
+# 4. Lancer en dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Le site sera disponible sur http://localhost:3000.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## Structure Airtable
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+### Table `Lots`
+| Champ | Type | Valeurs |
+|-------|------|---------|
+| Référence | Texte | A101, B302… |
+| Type | Sélection | T2, T3, T4 |
+| Surface (m²) | Nombre | |
+| Étage | Nombre | 0 = RDC |
+| Exposition | Sélection | Nord, Sud, Est, Ouest, Nord-Est… |
+| Prix (€) | Nombre | |
+| Statut | Sélection | **Disponible**, Optionné, Vendu |
+| Terrasse (m²) | Nombre | (optionnel) |
+| Description | Texte long | (optionnel) |
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+### Table `Demandes`
+| Champ | Type |
+|-------|------|
+| Nom | Texte |
+| Prénom | Texte |
+| Email | Email |
+| Téléphone | Téléphone |
+| Lot souhaité | Texte |
+| Message | Texte long |
+| Consentement RGPD | Case à cocher |
+| Date de demande | Date/heure |
+| Source | Texte |
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Mise à jour des statuts (commerciale)
 
-## Learn More
+La responsable commerciale accède directement à la table **Lots** dans Airtable et modifie le champ **Statut** (Disponible / Optionné / Vendu). Le site se met à jour automatiquement dans la minute suivante (ISR, revalidate 60s).
 
-To learn more about Next.js, take a look at the following resources:
+## Déploiement Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+1. Pousser le code sur GitHub
+2. Importer le repo dans Vercel (vercel.com)
+3. Ajouter les variables d'environnement dans Vercel > Settings > Environment Variables :
+   - `AIRTABLE_API_KEY`
+   - `AIRTABLE_BASE_ID`
+4. Déployer → l'URL est générée automatiquement
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Plaquette PDF
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+Déposer le fichier PDF de la plaquette commerciale dans `public/brochure.pdf`.
+Il sera accessible à l'URL `/brochure.pdf`.
+# Jardins-Vauban
