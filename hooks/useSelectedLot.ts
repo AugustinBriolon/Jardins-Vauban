@@ -13,7 +13,9 @@ export function useSelectedLot(lots: Lot[]) {
 
   const setReference = useCallback(
     (next: string | null) => {
-      const query = next ? { lot: next } : {};
+      // Keep the other parameters (active filters) untouched.
+      const otherParams = Object.fromEntries(Object.entries(router.query).filter(([key]) => key !== "lot"));
+      const query = next ? { ...otherParams, lot: next } : otherParams;
       router.replace({ pathname: router.pathname, query }, undefined, { shallow: true, scroll: false });
     },
     [router]

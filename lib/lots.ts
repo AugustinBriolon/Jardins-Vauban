@@ -108,3 +108,56 @@ export function startingPriceByType(lots: Lot[]): Record<LotType, number | null>
   }
   return result;
 }
+
+// ─── URL (de)serialisation ──────────────────────────────────────────────────
+// Filters live in the query string so a search can be shared, bookmarked,
+// and handed from the home page search to the catalogue.
+
+export type FilterQuery = { type?: string; budget?: string; dispo?: string };
+
+export function filtersToQuery(filters: LotFilters): FilterQuery {
+  const query: FilterQuery = {};
+  if (filters.types.length > 0) query.type = filters.types.join(",");
+  if (filters.budgetMax !== null) query.budget = String(filters.budgetMax);
+  if (filters.availableOnly) query.dispo = "1";
+  return query;
+}
+
+function firstValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+/** Tolerates hand-edited URLs: unknown types and non-numeric budgets are ignored. */
+export function filtersFromQuery(query: Record<string, string | string[] | undefined>): LotFilters {
+  const types = (firstValue(query.type) ?? "")
+    .split(",")
+    .filter((type): type is LotType => (LOT_TYPES as string[]).includes(type));
+  const budget = Number(firstValue(query.budget));
+  return {
+    types,
+    budgetMax: Number.isFinite(budget) && budget > 0 ? budget : null,
+    availableOnly: firstValue(query.dispo) === "1",
+  };
+}
+
+/** Round budget ceilings between the cheapest and the most expensive lot. */
+export function budgetSteps(bounds: { min: number; max: number }, step = 25_000): number[] {
+  const steps: number[] = [];
+  for (let value = Math.ceil(bounds.min / step) * step; value < bounds.max; value += step) {
+    steps.push(value);
+  }
+  return steps;
+}
+
+/** Public URL of a lot's dedicated page, the link sent to prospects. */
+export function lotPath(reference: string): string {
+  return `/lots/${encodeURIComponent(reference)}`;
+}
+
+/** Available lots of the same type, closest in price first. */
+export function similarLots(lot: Lot, lots: Lot[], limit = 3): Lot[] {
+  return lots
+    .filter((other) => other.id !== lot.id && other.type === lot.type && other.statut === "Disponible")
+    .sort((a, b) => Math.abs(a.prix - lot.prix) - Math.abs(b.prix - lot.prix))
+    .slice(0, limit);
+}
