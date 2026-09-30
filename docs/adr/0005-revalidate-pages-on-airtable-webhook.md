@@ -6,6 +6,8 @@ Date: 2026-09-30
 
 Proposed
 
+Amended by [ADR-0007](0007-size-revalidation-to-airtable-free-quota.md) (revalidation windows)
+
 ## Context
 
 The sales director updates lot statuses herself in Airtable. Her requirement: "when a lot is sold, it must not be shown as available the next day". Pages listing lots are statically generated. Until now, freshness relied on ISR with a 60 s window. That meets the requirement, but a visitor may still see a sold lot for up to a minute, and every page is rebuilt every minute even when nothing changed.
