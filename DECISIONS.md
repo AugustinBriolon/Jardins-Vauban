@@ -8,7 +8,7 @@
   - **fiche partageable par lot** (`/lots/A012`) avec formulaire pré-rempli : le lien que la commerciale envoie.
 - **Airtable** : table `Lots` (modifiée par la commerciale, lue par le site) et table `Demandes` (écrite par le formulaire, validée par un schéma Zod partagé entre navigateur et serveur, avec anti-bot).
 - **Données fiables** : chaque lot est validé à la lecture (prix au m² entre 2 000 et 15 000 €). Une faute de frappe écarte le lot et le signale dans les logs, au lieu de l'afficher.
-- **Fraîcheur** : un webhook Airtable (fonctionne sur le plan Free) régénère les listes en quelques secondes après un changement de statut.
+- **Fraîcheur** : un webhook Airtable (fonctionne sur le plan Free) régénère en quelques secondes les listes et **la fiche du lot modifié uniquement**, en lisant le détail des changements. Cela coûte ~4 appels API au lieu de 48.
 - **Données personnelles** :
   - consentement non pré-coché, conservation 12 mois ;
   - mentions légales et politique de confidentialité ;
@@ -16,14 +16,14 @@
   - formulaire en POST (rien dans l'URL) ;
   - carte chargée à la demande.
 - **Statistiques** : Vercel Web Analytics (visites, provenance) et table `Demandes` (volume, lot visé).
-- **Reprise par un junior** : 49 tests, 7 ADR dans `docs/adr/`, README avec commandes et conventions.
+- **Reprise par un junior** : 53 tests, 8 ADR dans `docs/adr/`, README avec commandes et conventions.
 
 ## Laissé de côté
 
 - **Back-office** : Airtable en fait déjà office (vues, droits).
 - **Alerte e-mail et purge à 12 mois** : une automation Airtable native suffit, elle reste à activer.
 - **Demande liée au lot par un champ lié, source UTM par demande** : j'ai priorisé la fiabilité et la fraîcheur des données.
-- **Hypothèses** : programme fictif (lots générés, livraison T4 2028), photos de Bordeaux et non du programme. « Le lendemain » est interprété ainsi : listes exactes en quelques secondes, fiches lot sous environ 24 h.
+- **Hypothèses** : programme fictif (lots générés, livraison T4 2028), photos de Bordeaux et non du programme. « Le lendemain » est largement tenu : toutes les pages sont à jour en quelques secondes, avec une régénération périodique en filet de sécurité.
 
 ## Travail avec l'IA
 
@@ -40,7 +40,7 @@
 
 - **Démo : 0 €** (Vercel Hobby, Airtable Free, carte OpenFreeMap).
 - **Production : ≈ 19,5 €/mois**, parce que Vercel Hobby **interdit l'usage commercial**. Il faut Vercel Pro (20 $, soit ≈ 18,5 €) plus le domaine (≈ 1 €). C'est sous la limite, mais de peu.
-- **Contrainte structurante : le plan Airtable Free plafonne à 1 000 appels API par mois.** Chaque régénération de page coûte un appel. D'où le webhook en voie principale et une régénération quotidienne seulement, pour environ 690 appels/mois estimés (ADR 0007).
+- **Contrainte structurante : le plan Airtable Free plafonne à 1 000 appels API par mois.** Chaque régénération de page coûte un appel. D'où le webhook ciblé en voie principale et des régénérations périodiques rares, pour environ 630 appels/mois estimés (ADR 0007 et 0008).
 
 ## Manque pour la production
 
@@ -49,7 +49,7 @@
 3. Compléter les mentions légales (SIREN, directeur de publication) et les faire valider par l'avocat.
 4. Brancher les vrais visuels, la plaquette et la grille de prix.
 5. Ajouter un test de bout en bout du parcours, et vérifier les animations sur de vrais téléphones.
-6. **Avec plus de temps** : migrer vers l'App Router, avec un cache Airtable unique invalidé par tag. Un changement coûterait alors un seul appel, et les 50 pages seraient exactes en quelques secondes.
+6. **Avec plus de temps** : migrer vers l'App Router, avec un cache Airtable unique invalidé par tag. Un changement coûterait alors un seul appel, sans lire le détail des changements.
 
 ## Temps passé
 
