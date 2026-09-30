@@ -1,170 +1,157 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/*
+ * Design tokens — "éditorial architectural".
+ * Palette drawn from Bordeaux limestone: warm stone ground, near-black ink,
+ * one muted garden green as the only accent. Status colours stay desaturated
+ * so the lot grid reads as information, not as a traffic light.
+ */
+@theme {
+  --color-limestone: #efe9dd;
+  --color-paper: #f7f3ec;
+  --color-ink: #1d1c19;
+  --color-ink-soft: #57534b;
+  --color-line: #d6cdbd;
+  --color-garden: #3d5240;
+  --color-garden-deep: #2b3a2e;
+  --color-garden-soft: #d9dfd1;
+  --color-ochre: #a77b32;
+  --color-ochre-soft: #eadcc0;
+  --color-sold: #bdb4a5;
 
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/*
+ * Font variables are set by next/font on the app wrapper, not on :root,
+ * so they must be inlined into utilities to resolve where they are used.
+ */
 @theme inline {
-  --color-navy:        #1B2A4A;
-  --color-navy-light:  #243660;
-  --color-gold:        #C9A96E;
-  --color-gold-light:  #DFC093;
-  --color-cream:       #F8F6F1;
-  --color-stone:       #E8E4DC;
-  --color-dispo:       #16A34A;
-  --color-option:      #D97706;
-  --color-vendu:       #DC2626;
-  --font-heading:        var(--font-sans);
-  --font-sans:        var(--font-sans);
-  --color-sidebar-ring:        var(--sidebar-ring);
-  --color-sidebar-border:        var(--sidebar-border);
-  --color-sidebar-accent-foreground:        var(--sidebar-accent-foreground);
-  --color-sidebar-accent:        var(--sidebar-accent);
-  --color-sidebar-primary-foreground:        var(--sidebar-primary-foreground);
-  --color-sidebar-primary:        var(--sidebar-primary);
-  --color-sidebar-foreground:        var(--sidebar-foreground);
-  --color-sidebar:        var(--sidebar);
-  --color-chart-5:        var(--chart-5);
-  --color-chart-4:        var(--chart-4);
-  --color-chart-3:        var(--chart-3);
-  --color-chart-2:        var(--chart-2);
-  --color-chart-1:        var(--chart-1);
-  --color-ring:        var(--ring);
-  --color-input:        var(--input);
-  --color-border:        var(--border);
-  --color-destructive:        var(--destructive);
-  --color-accent-foreground:        var(--accent-foreground);
-  --color-accent:        var(--accent);
-  --color-muted-foreground:        var(--muted-foreground);
-  --color-muted:        var(--muted);
-  --color-secondary-foreground:        var(--secondary-foreground);
-  --color-secondary:        var(--secondary);
-  --color-primary-foreground:        var(--primary-foreground);
-  --color-primary:        var(--primary);
-  --color-popover-foreground:        var(--popover-foreground);
-  --color-popover:        var(--popover);
-  --color-card-foreground:        var(--card-foreground);
-  --color-card:        var(--card);
-  --color-foreground:        var(--foreground);
-  --color-background:        var(--background);
-  --radius-sm:        calc(var(--radius) * 0.6);
-  --radius-md:        calc(var(--radius) * 0.8);
-  --radius-lg:        var(--radius);
-  --radius-xl:        calc(var(--radius) * 1.4);
-  --radius-2xl:        calc(var(--radius) * 1.8);
-  --radius-3xl:        calc(var(--radius) * 2.2);
-  --radius-4xl:        calc(var(--radius) * 2.6);
-}
-
-:root {
-  /* ── Kalimo brand ─────────────────────────────── */
-  --background:         #F8F6F1;
-  --foreground:         #1B2A4A;
-  --card:               #FFFFFF;
-  --card-foreground:    #1B2A4A;
-  --popover:            #FFFFFF;
-  --popover-foreground: #1B2A4A;
-  --primary:            #1B2A4A;
-  --primary-foreground: #F8F6F1;
-  --secondary:          #F0EDE6;
-  --secondary-foreground: #1B2A4A;
-  --muted:              #F0EDE6;
-  --muted-foreground:   #7A7060;
-  --accent:             #C9A96E;
-  --accent-foreground:  #1B2A4A;
-  --destructive:        oklch(0.577 0.245 27.325);
-  --border:             #E4E0D8;
-  --input:              #E4E0D8;
-  --ring:               #C9A96E;
-  --radius:             0.75rem;
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar:            #F0EDE6;
-  --sidebar-foreground: #1B2A4A;
-  --sidebar-primary:    #1B2A4A;
-  --sidebar-primary-foreground: #F8F6F1;
-  --sidebar-accent:     #C9A96E;
-  --sidebar-accent-foreground: #1B2A4A;
-  --sidebar-border:     #E4E0D8;
-  --sidebar-ring:       #C9A96E;
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Georgia, "Times New Roman", serif;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.fade-up {
-  animation: fadeUp 0.35s ease both;
-}
-
-.card-lift {
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.card-lift:hover {
-  box-shadow: 0 12px 32px rgba(27, 42, 74, 0.12);
-  transform: translateY(-3px);
-}
-
-.dark {
-  --background:        oklch(0.145 0 0);
-  --foreground:        oklch(0.985 0 0);
-  --card:        oklch(0.205 0 0);
-  --card-foreground:        oklch(0.985 0 0);
-  --popover:        oklch(0.205 0 0);
-  --popover-foreground:        oklch(0.985 0 0);
-  --primary:        oklch(0.922 0 0);
-  --primary-foreground:        oklch(0.205 0 0);
-  --secondary:        oklch(0.269 0 0);
-  --secondary-foreground:        oklch(0.985 0 0);
-  --muted:        oklch(0.269 0 0);
-  --muted-foreground:        oklch(0.708 0 0);
-  --accent:        oklch(0.269 0 0);
-  --accent-foreground:        oklch(0.985 0 0);
-  --destructive:        oklch(0.704 0.191 22.216);
-  --border:        oklch(1 0 0 / 10%);
-  --input:        oklch(1 0 0 / 15%);
-  --ring:        oklch(0.556 0 0);
-  --chart-1:        oklch(0.87 0 0);
-  --chart-2:        oklch(0.556 0 0);
-  --chart-3:        oklch(0.439 0 0);
-  --chart-4:        oklch(0.371 0 0);
-  --chart-5:        oklch(0.269 0 0);
-  --sidebar:        oklch(0.205 0 0);
-  --sidebar-foreground:        oklch(0.985 0 0);
-  --sidebar-primary:        oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground:        oklch(0.985 0 0);
-  --sidebar-accent:        oklch(0.269 0 0);
-  --sidebar-accent-foreground:        oklch(0.985 0 0);
-  --sidebar-border:        oklch(1 0 0 / 10%);
-  --sidebar-ring:        oklch(0.556 0 0);
+  --font-display: var(--font-instrument-serif), "Times New Roman", serif;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground text-pretty;
-  }
-  h1, h2, h3, h4, h5, h6, p, li, a, label {
-    @apply text-pretty;
-  }
   html {
-    @apply font-sans;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background: var(--color-limestone);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  p,
+  li {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--color-garden);
+    color: var(--color-paper);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-garden);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* Page gutter shared by every section, so edges line up across the site. */
+  .shell {
+    width: 100%;
+    max-width: 88rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .shell {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .shell {
+      padding-inline: 2.5rem;
+    }
+  }
+
+  /* Small uppercase label used for section indexes and metadata. */
+  .eyebrow {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+  }
+
+  /* Underline that draws in from the left on hover. */
+  .link-draw {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.5s var(--ease-out-expo);
+  }
+
+  .link-draw:hover,
+  .link-draw:focus-visible,
+  .link-draw[aria-current="page"] {
+    background-size: 100% 1px;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /*
+   * Hides the element until GSAP takes over, avoiding a flash of the final state.
+   * Safety net: if the script never runs, visibility is restored after 2.5 s.
+   * GSAP's autoAlpha also sets opacity inline, so animated elements are unaffected.
+   */
+  .js-motion [data-reveal] {
+    visibility: hidden;
+    animation: reveal-fallback 0s 2.5s forwards;
+  }
+}
+
+@keyframes reveal-fallback {
+  to {
+    visibility: visible;
+  }
+}
+
+/*
+ * Paper grain: a 3 % noise layer makes flat colour fields feel printed
+ * rather than rendered. Pointer-events off so it never blocks interaction.
+ */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }

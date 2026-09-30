@@ -31,10 +31,10 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://picsum.photos https://*.openstreetmap.org",
+      "img-src 'self' data: blob:",
       "font-src 'self' data:",
       "connect-src 'self' https://vitals.vercel-insights.com https://*.vercel-insights.com",
-      "frame-src 'self' https://www.openstreetmap.org",
+      "frame-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
     ].join("; "),
@@ -45,15 +45,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactCompiler: true,
   reactStrictMode: true,
-  images: {
-    unoptimized: false,
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "picsum.photos",
-      },
-    ],
-  },
   async headers() {
     return [
       {
