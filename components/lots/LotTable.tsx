@@ -4,6 +4,7 @@ import type { Lot } from "@/types";
 import { formatFloorShort, formatPrice, type LotSortKey } from "@/lib/lots";
 import { STATUS_STYLES, StatusDot } from "@/components/lots/status";
 import { cn } from "@/lib/utils";
+import { EASE_OUT } from "@/lib/easing";
 
 interface LotTableProps {
   lots: Lot[];
@@ -12,8 +13,6 @@ interface LotTableProps {
   onSort: (key: LotSortKey) => void;
   onSelect: (lot: Lot) => void;
 }
-
-const ROW_EASE = [0.16, 1, 0.3, 1] as const;
 
 const SORT_LABELS: Record<LotSortKey, string> = {
   reference: "référence",
@@ -65,7 +64,7 @@ export default function LotTable({ lots, sortKey, selectedId, onSort, onSelect }
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.35, ease: ROW_EASE }}
+              transition={{ duration: 0.5, ease: EASE_OUT }}
               onClick={() => onSelect(lot)}
               className={cn(
                 "tabular group cursor-pointer border-b border-line transition-colors duration-300 hover:bg-paper",

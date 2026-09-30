@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "lenis/dist/lenis.css";
 
 /*
  * Design tokens — "éditorial architectural".
@@ -24,6 +25,22 @@
 }
 
 /*
+ * Semantic aliases expected by the vendored mapcn component (components/ui/map.tsx),
+ * mapped onto the site palette so its controls and popups match the design.
+ */
+@theme inline {
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink);
+  --color-border: var(--color-line);
+  --color-popover: var(--color-paper);
+  --color-popover-foreground: var(--color-ink);
+  --color-muted: var(--color-limestone);
+  --color-muted-foreground: var(--color-ink-soft);
+  --color-accent: var(--color-limestone);
+  --color-ring: var(--color-garden);
+}
+
+/*
  * Font variables are set by next/font on the app wrapper, not on :root,
  * so they must be inlined into utilities to resolve where they are used.
  */
@@ -33,15 +50,9 @@
 }
 
 @layer base {
+  /* No scroll-behavior: smooth here, Lenis owns smooth scrolling. */
   html {
-    scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
   }
 
   body {

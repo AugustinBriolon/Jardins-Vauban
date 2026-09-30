@@ -7,7 +7,7 @@
  *   data-reveal            fade + rise when scrolled into view
  *   data-reveal="lines"    heading split into masked lines that rise in turn
  *   data-reveal="image"    image unveiled by a clip-path wipe
- *   data-reveal="stagger"  children tagged data-reveal-item rise one after another, bottom first
+ *   data-reveal="stagger"  fades in, then children tagged data-reveal-item "light up" in random order
  *   data-reveal-delay="n"  optional delay in seconds
  *   data-parallax="n"      image drifts n % of its height while the section scrolls
  * and `useScrollChoreography` (mounted once in _app) animates them.
@@ -22,8 +22,19 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, SplitText, useGSAP);
 }
 
-export const EASE_OUT = "expo.out";
+/*
+ * Motion language: long, decelerating eases (power3/power4) rather than snappy
+ * expo curves, generous durations and short travel distances. Elements settle
+ * into place instead of popping.
+ */
+const EASE_STRONG = "power4.out";
+const EASE_SOFT = "power3.out";
 const REVEAL_START = "top 88%";
+
+// Tight display leading (0.86–0.95) makes line boxes shorter than the glyphs:
+// descenders (g, p, j) and capital accents (À, É) would be clipped by the mask.
+// The mask is enlarged by this much, and compensated with negative margins so layout is unchanged.
+const MASK_BLEED = "0.2em";
 
 function delayOf(element: HTMLElement): number {
   return Number(element.dataset.revealDelay ?? 0);
@@ -32,13 +43,13 @@ function delayOf(element: HTMLElement): number {
 function revealFade(element: HTMLElement) {
   gsap.fromTo(
     element,
-    { autoAlpha: 0, y: 28 },
+    { autoAlpha: 0, y: 24 },
     {
       autoAlpha: 1,
       y: 0,
-      duration: 1.1,
+      duration: 1.4,
       delay: delayOf(element),
-      ease: EASE_OUT,
+      ease: EASE_SOFT,
       scrollTrigger: { trigger: element, start: REVEAL_START, once: true },
     }
   );
@@ -52,44 +63,63 @@ function revealLines(element: HTMLElement) {
     type: "lines",
     mask: "lines",
     autoSplit: true,
-    onSplit: (split) =>
-      gsap.from(split.lines, {
-        yPercent: 110,
-        duration: 1.2,
-        stagger: 0.09,
+    onSplit: (split) => {
+      gsap.set(split.masks, {
+        paddingTop: MASK_BLEED,
+        paddingBottom: MASK_BLEED,
+        marginTop: `-${MASK_BLEED}`,
+        marginBottom: `-${MASK_BLEED}`,
+      });
+      return gsap.from(split.lines, {
+        yPercent: 135,
+        rotate: 2,
+        transformOrigin: "0% 100%",
+        duration: 1.6,
+        stagger: 0.12,
         delay: delayOf(element),
-        ease: EASE_OUT,
+        ease: EASE_STRONG,
         scrollTrigger: { trigger: element, start: REVEAL_START, once: true },
-      }),
+      });
+    },
   });
 }
 
 function revealImage(element: HTMLElement) {
-  gsap.fromTo(
+  const image = element.querySelector("img");
+  const timeline = gsap.timeline({
+    delay: delayOf(element),
+    scrollTrigger: { trigger: element, start: REVEAL_START, once: true },
+  });
+  timeline.fromTo(
     element,
     { autoAlpha: 1, clipPath: "inset(100% 0% 0% 0%)" },
-    {
-      clipPath: "inset(0% 0% 0% 0%)",
-      duration: 1.6,
-      delay: delayOf(element),
-      ease: "expo.inOut",
-      scrollTrigger: { trigger: element, start: REVEAL_START, once: true },
-    }
+    { clipPath: "inset(0% 0% 0% 0%)", duration: 1.8, ease: "power4.inOut" }
   );
+  // The photo settles from a slight zoom while the frame opens.
+  if (image) timeline.from(image, { scale: 1.3, duration: 2.4, ease: EASE_STRONG }, 0);
 }
 
+// Unlit window colour: the stone of the facade (--color-line).
+const UNLIT_WINDOW = "#d6cdbd";
+
+/** The building fades in, then its windows light up one by one, in random order. */
 function revealStagger(element: HTMLElement) {
-  gsap.set(element, { autoAlpha: 1 });
-  gsap.from(element.querySelectorAll("[data-reveal-item]"), {
-    scaleY: 0,
-    transformOrigin: "50% 100%",
-    duration: 0.9,
-    ease: EASE_OUT,
-    stagger: { each: 0.018, from: "end" },
+  const timeline = gsap.timeline({
     delay: delayOf(element),
-    clearProps: "transform",
     scrollTrigger: { trigger: element, start: "top 80%", once: true },
   });
+  timeline.fromTo(element, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 1.2, ease: EASE_SOFT });
+  timeline.from(
+    element.querySelectorAll("[data-reveal-item]"),
+    {
+      backgroundColor: UNLIT_WINDOW,
+      duration: 0.8,
+      ease: "power2.out",
+      stagger: { each: 0.03, from: "random" },
+      clearProps: "backgroundColor",
+    },
+    0.4
+  );
 }
 
 function parallax(element: HTMLElement) {
@@ -104,7 +134,8 @@ function parallax(element: HTMLElement) {
         trigger: element.parentElement ?? element,
         start: "top bottom",
         end: "bottom top",
-        scrub: true,
+        // Slight catch-up so the image trails the scroll instead of being welded to it.
+        scrub: 0.8,
       },
     }
   );

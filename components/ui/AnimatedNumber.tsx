@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
+import { EASE_OUT } from "@/lib/easing";
 
 /** Counts smoothly from the previous value to the new one (instant under reduced motion). */
 export default function AnimatedNumber({ value, className }: { value: number; className?: string }) {
@@ -12,7 +13,7 @@ export default function AnimatedNumber({ value, className }: { value: number; cl
       motionValue.set(value);
       return;
     }
-    const controls = animate(motionValue, value, { duration: 0.6, ease: [0.16, 1, 0.3, 1] });
+    const controls = animate(motionValue, value, { duration: 0.6, ease: EASE_OUT });
     return () => controls.stop();
   }, [motionValue, value, reduceMotion]);
 

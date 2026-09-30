@@ -4,6 +4,7 @@ import type { Lot } from "@/types";
 import { countByStatus, formatFloor, formatFloorShort, formatPrice, groupByFloor } from "@/lib/lots";
 import { STATUS_STYLES, StatusDot } from "@/components/lots/status";
 import { cn } from "@/lib/utils";
+import { EASE_OUT } from "@/lib/easing";
 
 interface FacadeProps {
   lots: Lot[];
@@ -165,7 +166,7 @@ function Readout({ lot, lots }: { lot: Lot | null; lots: Lot[] }) {
           initial={{ y: 12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -12, opacity: 0 }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.25, ease: EASE_OUT }}
           className="tabular flex flex-wrap items-center gap-x-3 gap-y-1"
         >
           {lot ? (

@@ -6,6 +6,7 @@ import "@/styles/globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useScrollChoreography } from "@/lib/motion";
+import { useSmoothScroll } from "@/lib/smoothScroll";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
@@ -17,7 +18,10 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export default function App({ Component, pageProps, router }: AppProps) {
-  const scopeRef = useScrollChoreography<HTMLDivElement>(router.pathname);
+  useSmoothScroll();
+  // Keyed on the actual path (not the route pattern, not the query): moving between
+  // two lot pages re-runs the choreography, opening a lot drawer (?lot=) does not.
+  const scopeRef = useScrollChoreography<HTMLDivElement>(router.asPath.split(/[?#]/)[0]);
 
   return (
     <MotionConfig reducedMotion="user">

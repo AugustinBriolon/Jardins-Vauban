@@ -3,8 +3,10 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import { NAV_LINKS, SITE } from "@/lib/site";
+import { lockScroll } from "@/lib/smoothScroll";
 import { actionClasses } from "@/components/ui/ActionLink";
 import { cn } from "@/lib/utils";
+import { EASE_OUT, EASE_IN_OUT } from "@/lib/easing";
 
 const HIDE_AFTER_PX = 120;
 
@@ -43,14 +45,14 @@ export default function Header() {
   }, [events]);
 
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "";
+    lockScroll(menuOpen);
   }, [menuOpen]);
 
   return (
     <>
       <motion.header
         animate={{ y: hidden && !menuOpen ? "-100%" : "0%" }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.6, ease: EASE_OUT }}
         className={cn(
           "fixed inset-x-0 top-0 z-40 transition-[background-color,border-color] duration-500",
           scrolled || menuOpen
@@ -115,11 +117,12 @@ export default function Header() {
         {menuOpen && (
           <motion.nav
             id="menu-mobile"
+            data-lenis-prevent
             aria-label="Navigation mobile"
             initial={{ clipPath: "inset(0 0 100% 0)" }}
             animate={{ clipPath: "inset(0 0 0% 0)" }}
             exit={{ clipPath: "inset(0 0 100% 0)" }}
-            transition={{ duration: 0.7, ease: [0.76, 0, 0.24, 1] }}
+            transition={{ duration: 0.9, ease: EASE_IN_OUT }}
             className="fixed inset-0 z-30 flex flex-col justify-between bg-limestone px-4 pt-28 pb-10 md:hidden"
           >
             <ul className="space-y-2">
@@ -128,7 +131,7 @@ export default function Header() {
                   <motion.div
                     initial={{ y: "110%" }}
                     animate={{ y: "0%" }}
-                    transition={{ delay: 0.25 + index * 0.06, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ delay: 0.25 + index * 0.06, duration: 0.8, ease: EASE_OUT }}
                   >
                     <Link href={link.href} className="font-display block text-5xl leading-tight">
                       {link.label}
