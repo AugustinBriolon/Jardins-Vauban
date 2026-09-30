@@ -8,7 +8,7 @@
   - **fiche partageable par lot** (`/lots/A012`) avec formulaire pré-rempli : le lien que la commerciale envoie.
 - **Airtable** : table `Lots` (modifiée par la commerciale, lue par le site) et table `Demandes` (écrite par le formulaire, validée par un schéma Zod partagé entre navigateur et serveur, avec anti-bot).
 - **Données fiables** : chaque lot est validé à la lecture (prix au m² entre 2 000 et 15 000 €). Une faute de frappe écarte le lot et le signale dans les logs, au lieu de l'afficher.
-- **Fraîcheur** : un webhook Airtable régénère les listes en quelques secondes après un changement de statut.
+- **Fraîcheur** : un webhook Airtable (fonctionne sur le plan Free) régénère les listes en quelques secondes après un changement de statut.
 - **Données personnelles** :
   - consentement non pré-coché, conservation 12 mois ;
   - mentions légales et politique de confidentialité ;
@@ -45,12 +45,11 @@
 ## Manque pour la production
 
 1. Passer sur un hébergement autorisant l'usage commercial, puis brancher le domaine.
-2. Créer le webhook en production (script fourni). À confirmer : qu'il fonctionne bien en plan Free, ce qui n'est pas documenté.
-3. Activer l'alerte e-mail et la purge dans Airtable.
-4. Compléter les mentions légales (SIREN, directeur de publication) et les faire valider par l'avocat.
-5. Brancher les vrais visuels, la plaquette et la grille de prix.
-6. Ajouter un test de bout en bout du parcours, et vérifier les animations sur de vrais téléphones.
-7. **Avec plus de temps** : migrer vers l'App Router, avec un cache Airtable unique invalidé par tag. Un changement coûterait alors un seul appel, et les 50 pages seraient exactes en quelques secondes.
+2. Activer l'alerte e-mail et la purge dans Airtable.
+3. Compléter les mentions légales (SIREN, directeur de publication) et les faire valider par l'avocat.
+4. Brancher les vrais visuels, la plaquette et la grille de prix.
+5. Ajouter un test de bout en bout du parcours, et vérifier les animations sur de vrais téléphones.
+6. **Avec plus de temps** : migrer vers l'App Router, avec un cache Airtable unique invalidé par tag. Un changement coûterait alors un seul appel, et les 50 pages seraient exactes en quelques secondes.
 
 ## Temps passé
 
