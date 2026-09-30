@@ -9,11 +9,30 @@ const CACHE_TTL_MS = 60 * 1000;
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Lot[] | { error: string }>
+  res: NextApiResponse<Lot[] | { error: string; details?: string }>
 ) {
   if (req.method !== "GET") {
     res.setHeader("Allow", ["GET"]);
     return res.status(405).json({ error: "Méthode non autorisée" });
+  }
+
+  // Diagnostic immédiat des variables d'environnement
+  const hasApiKey = Boolean(
+    process.env.AIRTABLE_API_KEY ||
+    process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN ||
+    process.env.AIRTABLE_TOKEN
+  );
+  const hasBaseId = Boolean(process.env.AIRTABLE_BASE_ID);
+
+  if (!hasApiKey || !hasBaseId) {
+    const missing = [];
+    if (!hasApiKey) missing.push("AIRTABLE_API_KEY");
+    if (!hasBaseId) missing.push("AIRTABLE_BASE_ID");
+    
+    console.error(`[api/lots] Variables d'environnement manquantes sur Vercel : ${missing.join(", ")}`);
+    return res.status(500).json({
+      error: `Variables d'environnement manquantes sur le serveur : ${missing.join(", ")}. Veuillez les configurer dans les paramètres Vercel du projet.`,
+    });
   }
 
   try {
@@ -29,14 +48,18 @@ export default async function handler(
       "public, s-maxage=60, stale-while-revalidate=300"
     );
     return res.status(200).json(memoryCache.lots);
-  } catch (err) {
-    console.error("[api/lots]", err);
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[api/lots] Erreur Airtable détaillée :", errMsg);
 
-    // Si Airtable est indisponible mais qu'on a du cache en mémoire (même expiré), on sert le cache dégradé
-    if (memoryCache?.lots) {
+    // Si Airtable est temporairement en erreur mais qu'on a du cache en mémoire, on sert le cache
+    if (memoryCache?.lots && memoryCache.lots.length > 0) {
       return res.status(200).json(memoryCache.lots);
     }
 
-    return res.status(500).json({ error: "Impossible de récupérer les lots." });
+    return res.status(500).json({
+      error: "Impossible de récupérer les lots depuis Airtable.",
+      details: errMsg,
+    });
   }
 }

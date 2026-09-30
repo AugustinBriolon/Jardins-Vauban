@@ -159,7 +159,10 @@ html {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-pretty;
+  }
+  h1, h2, h3, h4, h5, h6, p, li, a, label {
+    @apply text-pretty;
   }
   html {
     @apply font-sans;

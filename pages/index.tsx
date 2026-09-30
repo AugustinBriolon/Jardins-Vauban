@@ -1,6 +1,5 @@
 import Head from "next/head";
 import Link from "next/link";
-import Image from "next/image";
 import { buttonVariants } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -82,21 +81,19 @@ export default function HomePage() {
       </Head>
 
       {/* ─── Hero Section ─────────────────────────────────────────────────── */}
-      <section className="relative bg-[#1B2A4A] text-white overflow-hidden min-h-[85vh] flex items-center">
-        {/* Voiles dégradés pour contraste parfait et élégance */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1B2A4A] via-[#1B2A4A]/90 to-[#1B2A4A]/50 z-10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1B2A4A] via-transparent to-transparent z-10" />
-
-        {/* Image de fond */}
-        <div className="absolute inset-0">
-          <Image
-            src="/hero.jpg"
-            alt="Perspective extérieure de la résidence Les Jardins de Vauban à Bordeaux"
-            fill
-            className="object-cover object-center scale-105 transform motion-safe:animate-pulse-subtle"
-            priority
-          />
-        </div>
+      <section className="relative bg-[#1B2A4A] text-white overflow-hidden min-h-[80vh] flex items-center">
+        {/* Décors architecturaux & halos de lumière dorée */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#C9A96E]/10 rounded-full blur-3xl pointer-events-none -mr-48 -mt-48" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#243660]/40 rounded-full blur-2xl pointer-events-none -ml-36 -mb-36" />
+        
+        {/* Trame géométrique subtile (façades bordelaises) */}
+        <div
+          className="absolute inset-0 opacity-[0.035] pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(#C9A96E 1px, transparent 1px)`,
+            backgroundSize: "24px 24px",
+          }}
+        />
 
         <div className="relative z-20 max-w-6xl mx-auto px-6 sm:px-8 py-24 sm:py-32 w-full">
           {/* Badge statut */}
