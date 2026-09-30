@@ -17,19 +17,43 @@ const BASE_ID = process.env.AIRTABLE_BASE_ID;
 const TOKEN = process.env.AIRTABLE_API_KEY;
 const NOTIFICATION_URL = process.argv[2];
 
+/** Airtable must be able to reach the URL: reject placeholders, localhost and plain http. */
+function assertPublicWebhookUrl(value: string | undefined): asserts value is string {
+  let url: URL;
+  try {
+    url = new URL(value ?? "");
+  } catch {
+    throw new Error("Pass the public URL of the deployed site, e.g. https://my-site.vercel.app/api/airtable-webhook");
+  }
+  const isLocal = ["localhost", "127.0.0.1"].includes(url.hostname);
+  if (url.protocol !== "https:" || isLocal || !url.hostname.includes(".") || /[<>]/.test(decodeURI(url.href))) {
+    throw new Error(`"${value}" is not a public https URL. Use the deployed site, e.g. https://my-site.vercel.app/api/airtable-webhook`);
+  }
+  if (url.pathname !== "/api/airtable-webhook") {
+    throw new Error(`The URL must end with /api/airtable-webhook (got ${url.pathname})`);
+  }
+}
+
 async function airtable<T>(method: string, apiPath: string, body?: unknown): Promise<T> {
   const response = await fetch(`https://api.airtable.com/v0${apiPath}`, {
     method,
     headers: { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (response.status === 403 && apiPath.endsWith("/webhooks")) {
+    throw new Error(
+      "Airtable refused to create the webhook (403). Add the `webhook:manage` scope to the token " +
+        "(https://airtable.com/create/tokens) and check the base is in its access list. " +
+        "If it still fails, webhooks may not be available on this Airtable plan."
+    );
+  }
   if (!response.ok) throw new Error(`${method} ${apiPath} → ${response.status} ${await response.text()}`);
   return (await response.json()) as T;
 }
 
 async function main() {
   if (!BASE_ID || !TOKEN) throw new Error("AIRTABLE_API_KEY and AIRTABLE_BASE_ID must be set in .env.local");
-  if (!NOTIFICATION_URL?.startsWith("https://")) throw new Error("Pass the public https URL of /api/airtable-webhook");
+  assertPublicWebhookUrl(NOTIFICATION_URL);
 
   const { tables } = await airtable<{ tables: { id: string; name: string }[] }>("GET", `/meta/bases/${BASE_ID}/tables`);
   const lotsTable = tables.find((table) => table.name === "Lots");
