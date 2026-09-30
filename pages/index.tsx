@@ -4,14 +4,16 @@ import { useRouter } from "next/router";
 import type { InferGetStaticPropsType } from "next";
 import type { Lot } from "@/types";
 import { getLotsStaticProps } from "@/lib/staticProps";
-import { LOT_TYPES, countByStatus, countByType, formatPrice, startingPriceByType } from "@/lib/lots";
+import { LOT_TYPES, countByType, filtersToQuery, formatPrice, startingPriceByType } from "@/lib/lots";
 import { SITE } from "@/lib/site";
 import ActionLink from "@/components/ui/ActionLink";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Facade from "@/components/lots/Facade";
-import LocationPlan from "@/components/home/LocationPlan";
+import LotDrawer from "@/components/lots/LotDrawer";
+import { useSelectedLot } from "@/hooks/useSelectedLot";
+import Neighbourhood from "@/components/home/Neighbourhood";
+import LotSearch from "@/components/home/LotSearch";
 import heroPhoto from "@/public/images/rue-pierre-bordeaux.jpg";
-import quaysPhoto from "@/public/images/quais-garonne.jpg";
 import { NBSP } from "@/lib/utils";
 import boursePhoto from "@/public/images/place-de-la-bourse.jpg";
 
@@ -26,13 +28,6 @@ const PROGRAMME_FACTS = [
   { term: "Stationnement", value: "Parking en sous-sol, local vélos" },
 ];
 
-const NEIGHBOURHOOD = [
-  { time: "3 min", mode: "à pied", place: "Place Nansouty et son marché" },
-  { time: "5 min", mode: "à pied", place: "Arrêt de tramway" },
-  { time: "8 min", mode: "à vélo", place: "Gare Saint-Jean, Paris en 2 h" },
-  { time: "15 min", mode: "en tram", place: "Place de la Comédie" },
-];
-
 const MILESTONES = [
   { period: "Automne 2026", title: "Avant-première", text: "Inscriptions ouvertes, priorité de choix aux premiers contacts.", current: true },
   { period: "Début 2027", title: "Ouverture commerciale", text: "Grille de prix définitive et signature des contrats de réservation." },
@@ -41,8 +36,6 @@ const MILESTONES = [
 ];
 
 export default function HomePage({ lots }: InferGetStaticPropsType<typeof getStaticProps>) {
-  const available = countByStatus(lots).Disponible;
-
   return (
     <>
       <Head>
@@ -55,7 +48,7 @@ export default function HomePage({ lots }: InferGetStaticPropsType<typeof getSta
         <meta property="og:image" content={heroPhoto.src} />
       </Head>
 
-      <Hero available={available} />
+      <Hero lots={lots} />
       <Programme />
       <LotsPreview lots={lots} />
       <Neighbourhood />
@@ -66,56 +59,62 @@ export default function HomePage({ lots }: InferGetStaticPropsType<typeof getSta
   );
 }
 
-function Hero({ available }: { available: number }) {
+function Hero({ lots }: { lots: Lot[] }) {
+  const router = useRouter();
+
   return (
-    <section className="shell pt-28 pb-20 lg:pt-36 lg:pb-32">
+    <section className="shell pt-28 pb-20 lg:pt-32 lg:pb-32">
       <div data-reveal className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line pb-5">
         <p className="eyebrow">Bordeaux — {SITE.district}</p>
-        <p className="eyebrow">Livraison {SITE.deliveryShort}</p>
-        <p className="eyebrow ml-auto flex items-center gap-2 text-garden">
+        <p className="eyebrow hidden sm:block">Livraison {SITE.deliveryShort}</p>
+        <p className="eyebrow ml-auto flex items-center gap-2 whitespace-nowrap text-garden">
           <span className="relative flex size-2">
             <span className="absolute inset-0 rounded-full bg-garden motion-safe:animate-ping" />
             <span className="relative size-2 rounded-full bg-garden" />
           </span>
-          Avant-première ouverte
+          Avant-première<span className="hidden sm:inline">{NBSP}ouverte</span>
         </p>
       </div>
 
-      <h1
-        data-reveal="lines"
-        className="font-display mt-10 text-[clamp(3.75rem,13.5vw,13rem)] leading-[0.86] tracking-[-0.035em]"
-      >
-        Les Jardins <em className="text-garden">de</em>
-        <br />
-        Vauban
-      </h1>
-
-      <div className="mt-12 grid gap-10 lg:mt-20 lg:grid-cols-12 lg:gap-8">
-        <div className="flex flex-col justify-between gap-10 lg:col-span-4">
-          <p data-reveal data-reveal-delay="0.3" className="max-w-sm text-lg leading-relaxed text-ink-soft">
-            {SITE.totalLots} appartements du T2 au T4, en pierre claire, autour d&apos;un jardin de {SITE.gardenArea}.
-            Au sud du centre historique, à cinq minutes du tramway.
+      <div className="mt-8 grid gap-6 sm:mt-10 sm:gap-8 lg:mt-14 lg:grid-cols-12 lg:items-end">
+        <h1
+          data-reveal="lines"
+          className="font-display text-[clamp(3.5rem,11vw,11rem)] leading-[0.88] tracking-[-0.035em] lg:col-span-9 lg:text-[clamp(5rem,8.2vw,11rem)]"
+        >
+          Les Jardins <em className="text-garden">de</em>
+          <br />
+          Vauban
+        </h1>
+        <div data-reveal data-reveal-delay="0.3" className="space-y-4 lg:col-span-3 lg:pb-3">
+          <p className="max-w-sm leading-relaxed text-ink-soft sm:text-lg">
+            {SITE.totalLots} appartements du T2 au T4 autour d&apos;un jardin de {SITE.gardenArea}, au sud du centre historique.
           </p>
-          <div data-reveal data-reveal-delay="0.45" className="flex flex-col gap-3 sm:flex-row sm:items-center lg:flex-col lg:items-start">
-            <ActionLink href="/lots">Voir les {available > 0 ? `${available} lots disponibles` : "lots"}</ActionLink>
-            <ActionLink href={SITE.brochureUrl} variant="text" target="_blank" rel="noopener" className="sm:ml-4 lg:ml-0">
-              Télécharger la plaquette
-            </ActionLink>
-          </div>
+          <ActionLink href={SITE.brochureUrl} variant="text" target="_blank" rel="noopener">
+            Télécharger la plaquette
+          </ActionLink>
         </div>
+      </div>
 
-        <div data-reveal="image" data-reveal-delay="0.2" className="relative aspect-[4/5] overflow-hidden sm:aspect-[16/10] lg:col-span-8">
-          <Image
-            src={heroPhoto}
-            alt="Rue bordée de façades en pierre blonde dans le centre de Bordeaux"
-            fill
-            priority
-            placeholder="blur"
-            sizes="(min-width: 1024px) 66vw, 100vw"
-            data-parallax="12"
-            className="scale-110 object-cover"
+      {lots.length > 0 && (
+        <div data-reveal data-reveal-delay="0.45" className="mt-8 sm:mt-12 lg:mt-16">
+          <LotSearch
+            lots={lots}
+            onSearch={(filters) => router.push({ pathname: "/lots", query: { ...filtersToQuery(filters) } })}
           />
         </div>
+      )}
+
+      <div data-reveal="image" data-reveal-delay="0.2" className="relative mt-8 aspect-[4/5] overflow-hidden sm:mt-12 sm:aspect-[21/9] lg:mt-16">
+        <Image
+          src={heroPhoto}
+          alt="Rue bordée de façades en pierre blonde dans le centre de Bordeaux"
+          fill
+          priority
+          placeholder="blur"
+          sizes="100vw"
+          data-parallax="14"
+          className="scale-110 object-cover"
+        />
       </div>
     </section>
   );
@@ -161,6 +160,7 @@ function Programme() {
 
 function LotsPreview({ lots }: { lots: Lot[] }) {
   const router = useRouter();
+  const { selectedLot, selectLot, closeLot } = useSelectedLot(lots);
   const startingPrices = startingPriceByType(lots);
   const typeCounts = countByType(lots);
 
@@ -172,7 +172,7 @@ function LotsPreview({ lots }: { lots: Lot[] }) {
         <div className="mt-16 grid gap-14 lg:mt-24 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-8">
             {lots.length > 0 ? (
-              <Facade lots={lots} onSelect={(lot) => router.push(`/lots?lot=${lot.reference}`)} />
+              <Facade lots={lots} selectedId={selectedLot?.id ?? null} onSelect={selectLot} />
             ) : (
               <p className="border border-line p-8 text-ink-soft">La grille des lots est momentanément indisponible.</p>
             )}
@@ -210,50 +210,12 @@ function LotsPreview({ lots }: { lots: Lot[] }) {
           </div>
         </div>
       </div>
-    </section>
-  );
-}
-
-function Neighbourhood() {
-  return (
-    <section id="quartier" className="scroll-mt-24 py-24 lg:py-36">
-      <div className="shell">
-        <SectionHeading index="03" label="Le quartier" title={<>Nansouty, le Bordeaux des échoppes et des marchés.</>} />
-      </div>
-
-      <div data-reveal="image" className="relative mt-16 aspect-[16/9] overflow-hidden lg:mt-24 lg:aspect-[21/8]">
-        <Image
-          src={quaysPhoto}
-          alt="Les quais de la Garonne à Bordeaux au lever du soleil"
-          fill
-          placeholder="blur"
-          sizes="100vw"
-          data-parallax="16"
-          className="scale-115 object-cover"
-        />
-      </div>
-
-      <div className="shell mt-16 grid gap-14 lg:mt-24 lg:grid-cols-12 lg:gap-8">
-        <ul className="lg:col-span-5">
-          {NEIGHBOURHOOD.map((item, index) => (
-            <li
-              key={item.place}
-              data-reveal
-              data-reveal-delay={String(index * 0.06)}
-              className="grid grid-cols-[7rem_1fr] items-baseline gap-4 border-b border-line py-5 first:border-t"
-            >
-              <span className="font-display tabular text-4xl">{item.time}</span>
-              <span>
-                <span className="eyebrow block">{item.mode}</span>
-                {item.place}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <div data-reveal className="lg:col-span-6 lg:col-start-7">
-          <LocationPlan />
-        </div>
-      </div>
+      <LotDrawer
+        lot={selectedLot}
+        allLots={lots}
+        onClose={closeLot}
+        onShowSimilar={(lot) => router.push({ pathname: "/lots", query: { ...filtersToQuery({ types: [lot.type], budgetMax: null, availableOnly: true }) } })}
+      />
     </section>
   );
 }
@@ -296,7 +258,7 @@ function Developer() {
         <p data-reveal className="eyebrow text-paper/60 lg:col-span-3">Le promoteur</p>
         <div className="lg:col-span-8">
           <p data-reveal="lines" className="font-display text-[clamp(2rem,4.5vw,4rem)] leading-[1.05]">
-            {SITE.developer}, promoteur régional en Nouvelle-Aquitaine{NBSP}: quarante collaborateurs, six à huit résidences livrées chaque année.
+            {SITE.developer} est un promoteur de Nouvelle-Aquitaine. Quarante collaborateurs, six à huit résidences livrées chaque année.
           </p>
           <p data-reveal className="mt-10 max-w-xl text-paper/70">
             Vente en l&apos;état futur d&apos;achèvement : garantie financière d&apos;achèvement, garantie de parfait achèvement,
@@ -320,7 +282,7 @@ function FinalCall() {
         </h2>
         <div data-reveal className="flex flex-col justify-end gap-6 lg:col-span-4">
           <p className="text-ink-soft">
-            Un conseiller vous rappelle sous 48 h ouvrées pour vous présenter les lots qui correspondent à votre projet.
+            Un conseiller vous rappelle sous 48{NBSP}h ouvrées pour vous présenter les lots qui correspondent à votre projet.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
             <ActionLink href="/contact">Être rappelé</ActionLink>

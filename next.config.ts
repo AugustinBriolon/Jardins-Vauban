@@ -33,7 +33,9 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https://vitals.vercel-insights.com https://*.vercel-insights.com",
+      "connect-src 'self' https://vitals.vercel-insights.com https://*.vercel-insights.com https://tiles.openfreemap.org",
+      // MapLibre spawns its self-hosted worker and decodes tiles into blobs.
+      "worker-src 'self' blob:",
       "frame-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

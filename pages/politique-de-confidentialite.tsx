@@ -64,6 +64,16 @@ const SECTIONS: LegalSection[] = [
     ),
   },
   {
+    title: "Carte du quartier",
+    body: (
+      <p>
+        La carte est affichée à partir de tuiles fournies par <strong>OpenFreeMap</strong>. Pour les charger, votre navigateur
+        transmet votre adresse IP à ce service, comme pour toute ressource web. Aucun cookie n&apos;est déposé et la carte ne se
+        charge que lorsque vous faites défiler la page jusqu&apos;à elle.
+      </p>
+    ),
+  },
+  {
     title: "Vos droits",
     body: (
       <>
