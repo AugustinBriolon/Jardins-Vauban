@@ -1,50 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { z } from "zod";
 import { createDemande } from "@/lib/airtable";
-
-// Schéma de validation strict Zod (compatible Zod v3 & v4)
-const contactSchema = z.object({
-  nom: z
-    .string()
-    .trim()
-    .min(1, "Le nom est requis.")
-    .max(80, "Le nom ne doit pas dépasser 80 caractères."),
-  prenom: z
-    .string()
-    .trim()
-    .min(1, "Le prénom est requis.")
-    .max(80, "Le prénom ne doit pas dépasser 80 caractères."),
-  email: z
-    .string()
-    .trim()
-    .email("Veuillez saisir une adresse email valide.")
-    .max(255, "L'email est trop long."),
-  telephone: z
-    .string()
-    .trim()
-    .max(25, "Numéro de téléphone trop long.")
-    .regex(/^[0-9+.\s()-]*$/, "Format de numéro de téléphone non valide.")
-    .optional()
-    .or(z.literal("")),
-  lotSouhaite: z
-    .string()
-    .trim()
-    .max(30, "La référence de lot est trop longue.")
-    .regex(/^[a-zA-Z0-9\s_-]*$/, "Caractères invalides dans la référence de lot.")
-    .optional()
-    .or(z.literal("")),
-  message: z
-    .string()
-    .trim()
-    .min(5, "Le message doit contenir au moins 5 caractères.")
-    .max(3000, "Le message ne peut pas dépasser 3 000 caractères."),
-  consentement: z
-    .boolean()
-    .refine((val) => val === true, {
-      message: "Le consentement au traitement des données personnelles est obligatoire.",
-    }),
-  website_hp: z.string().optional(),
-});
+import { contactSchema } from "@/lib/contactSchema";
 
 // Limiteur de requêtes in-memory (Rate Limiter IP)
 // 5 requêtes maximum par fenêtre de 10 minutes par IP
@@ -119,10 +75,7 @@ export default async function handler(
   // 3. Validation stricte des données avec Zod
   const validation = contactSchema.safeParse(req.body);
   if (!validation.success) {
-    // Compatible Zod 3 (error.errors) et Zod 4 (error.issues)
-    const errObj = validation.error as unknown as { issues?: Array<{ message: string }>; errors?: Array<{ message: string }> };
-    const issueList = errObj.issues || errObj.errors || [];
-    const firstError = issueList[0]?.message || "Données fournies non valides.";
+    const firstError = validation.error.issues[0]?.message ?? "Données fournies non valides.";
     return res.status(400).json({ error: firstError });
   }
 

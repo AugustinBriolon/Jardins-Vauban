@@ -36,7 +36,7 @@ function getBase(): Airtable.Base {
 }
 
 // Helper pour extraire un champ même si la casse ou les accents varient
-function getField(record: Airtable.Record<any>, ...candidates: string[]): any {
+function getField(record: Airtable.Record<Airtable.FieldSet>, ...candidates: string[]): unknown {
   for (const c of candidates) {
     const val = record.get(c);
     if (val !== undefined && val !== null && val !== "") {
